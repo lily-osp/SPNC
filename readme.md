@@ -6,7 +6,10 @@
 
 **1. Introduction & Vision**
 
-The SPNC aims to be a powerful, open-source handheld calculator built using ESP32 hardware, specifically targeting **ESP32 variants with PSRAM**. It combines standard scientific calculation capabilities with user programmability via **scripts written in a sandboxed subset of Micropython syntax**. Persistent storage via SD card is mandatory for scripts, data, history, and configuration. Network connectivity enables access to external APIs (e.g., Wikipedia, LLMs), callable from user scripts. The primary input method is an 8x8 matrix keyboard, and output is displayed on a **256x128 pixel monochrome OLED screen**. The device supports interfacing with external sensors and peripherals via a dedicated **I2C bus**. The device is intended to be tethered (powered via USB).
+The SPNC aims to be a powerful, open-source handheld calculator built using ESP32 hardware, specifically targeting **ESP32 variants with PSRAM**.
+It combines standard scientific calculation capabilities with user programmability via **scripts written in a sandboxed subset of Micropython syntax**. Persistent storage via SD card is mandatory for scripts, data, history, and configuration. Network connectivity enables access to external APIs (e.g., Wikipedia, LLMs), callable from user scripts.
+The primary input method is an 8x8 matrix keyboard, and output is displayed on a **256x128 pixel monochrome OLED screen**.
+The device supports interfacing with external sensors and peripherals via a dedicated **I2C bus**. The device is intended to be tethered (powered via USB).
 
 **2. Goals & Objectives**
 
@@ -42,69 +45,75 @@ The SPNC aims to be a powerful, open-source handheld calculator built using ESP3
 
 **5. Functional Requirements**
 
-**5.1. Core Calculator Mode**
-    *   **FR-CALC-01:** Support standard arithmetic operations: +, -, *, /, %.
-    *   **FR-CALC-02:** Support calculation with proper operator precedence and parentheses: (, ).
-    *   **FR-CALC-03:** Support standard scientific functions (Trig, Hyperbolic, Log, Exp, Power, Sqrt, Constants, Number Manipulation, Factorial - see v0.1 for full list).
-    *   **FR-CALC-04:** Support DEG, RAD, GRAD modes for trigonometric functions, with clear indication on the display.
-    *   **FR-CALC-05:** Provide memory functions: Store (STO), Recall (RCL) for multiple variables (e.g., A-Z, Ans).
-    *   **FR-CALC-06:** Maintain an "Ans" (Last Answer) variable.
-    *   **FR-CALC-07:** Handle numerical input (int, float, scientific notation).
-    *   **FR-CALC-08:** Provide clear error reporting for mathematical and syntax errors.
-    *   **FR-CALC-09:** The UI should leverage the 256x128 display for enhanced context (e.g., multi-line input/output, variable watch area).
+* **5.1. Core Calculator Mode**
+* **FR-CALC-01:** Support standard arithmetic operations: +, -, *, /, %.
+* **FR-CALC-02:** Support calculation with proper operator precedence and parentheses: (, ).
+* **FR-CALC-03:** Support standard scientific functions (Trig, Hyperbolic, Log, Exp, Power, Sqrt, Constants, Number Manipulation, Factorial - see v0.1 for full list).
+* **FR-CALC-04:** Support DEG, RAD, GRAD modes for trigonometric functions, with clear indication on the display.
+* **FR-CALC-05:** Provide memory functions: Store (STO), Recall (RCL) for multiple variables (e.g., A-Z, Ans).
+* **FR-CALC-06:** Maintain an "Ans" (Last Answer) variable.
+* **FR-CALC-07:** Handle numerical input (int, float, scientific notation).
+* **FR-CALC-08:** Provide clear error reporting for mathematical and syntax errors.
+* **FR-CALC-09:** The UI should leverage the 256x128 display for enhanced context (e.g., multi-line input/output, variable watch area).
 
 **5.2. Programming Mode (Micropython Scripting)**
-    *   **FR-PROG-01:** Allow entry and line-by-line editing of scripts using **Micropython syntax**.
-    *   **FR-PROG-02:** Scripts must be savable/loadable as `.py` text files to/from `/sd/scripts/` via a file browser UI.
-    *   **FR-PROG-03:** Allow execution of `.py` scripts using a **sandboxed execution environment** (`sandbox_exec.py`).
-    *   **FR-PROG-04:** Display script execution status clearly (Running, Paused, Done, Error + Line).
-    *   **FR-PROG-05:** Provide scripts access to calculator state and functionality via a **well-defined `calculator_api` module** (see Section 8).
-    *   **FR-PROG-06:** Catch and display Python exceptions from user scripts, including script name and line number.
-    *   **FR-PROG-07:** The sandboxing mechanism must restrict access to harmful builtins and prevent direct hardware access (except via `calculator_api.i2c_...` functions). Define allowed builtins/imports (see Section 8).
-    *   **FR-PROG-08:** Implement the API functions callable from user scripts as defined in Section 8.
+
+* **FR-PROG-01:** Allow entry and line-by-line editing of scripts using **Micropython syntax**.
+* **FR-PROG-02:** Scripts must be savable/loadable as `.py` text files to/from `/sd/scripts/` via a file browser UI.
+* **FR-PROG-03:** Allow execution of `.py` scripts using a **sandboxed execution environment** (`sandbox_exec.py`).
+* **FR-PROG-04:** Display script execution status clearly (Running, Paused, Done, Error + Line).
+* **FR-PROG-05:** Provide scripts access to calculator state and functionality via a **well-defined `calculator_api` module** (see Section 8).
+* **FR-PROG-06:** Catch and display Python exceptions from user scripts, including script name and line number.
+* **FR-PROG-07:** The sandboxing mechanism must restrict access to harmful builtins and prevent direct hardware access (except via `calculator_api.i2c_...` functions). Define allowed builtins/imports (see Section 8).
+* **FR-PROG-08:** Implement the API functions callable from user scripts as defined in Section 8.
 
 **5.3. Display & User Interface**
-    *   **FR-UI-01:** Utilize the **256x128 pixel monochrome OLED display** effectively.
-    *   **FR-UI-02:** Implement distinct modes (e.g., CALC, SCRIPT-EDIT, SCRIPT-RUN, FILE-BROWSE, API-WIKI, API-LLM, I2C-MONITOR?) with clear status bar indication.
-    *   **FR-UI-03:** Status bar displays: Mode, WiFi status, DEG/RAD/GRAD, SHIFT/FN status, current script name (if applicable).
-    *   **FR-UI-04:** Display calculator input expression clearly (multi-line/scrolling).
-    *   **FR-UI-05:** Display calculation results clearly (potentially with more precision or context).
-    *   **FR-UI-06:** Display script listings with line numbers, maximizing vertical space for context.
-    *   **FR-UI-07:** Provide a functional file browser for `/sd/scripts/` and `/sd/data/`.
-    *   **FR-UI-08:** Display multi-line text results from API calls or script outputs effectively.
-    *   **FR-UI-09:** Provide visual feedback for key presses.
-    *   **FR-UI-10:** Use clear, readable fonts, potentially configurable or context-dependent (larger fonts possible).
-    *   **FR-UI-11:** Design UI layouts that utilize the vertical space (e.g., variable watch pane, persistent history view).
+
+* **FR-UI-01:** Utilize the **256x128 pixel monochrome OLED display** effectively.
+* **FR-UI-02:** Implement distinct modes (e.g., CALC, SCRIPT-EDIT, SCRIPT-RUN, FILE-BROWSE, API-WIKI, API-LLM, I2C-MONITOR?) with clear status bar indication.
+* **FR-UI-03:** Status bar displays: Mode, WiFi status, DEG/RAD/GRAD, SHIFT/FN status, current script name (if applicable).
+* **FR-UI-04:** Display calculator input expression clearly (multi-line/scrolling).
+* **FR-UI-05:** Display calculation results clearly (potentially with more precision or context).
+* **FR-UI-06:** Display script listings with line numbers, maximizing vertical space for context.
+* **FR-UI-07:** Provide a functional file browser for `/sd/scripts/` and `/sd/data/`.
+* **FR-UI-08:** Display multi-line text results from API calls or script outputs effectively.
+* **FR-UI-09:** Provide visual feedback for key presses.
+* **FR-UI-10:** Use clear, readable fonts, potentially configurable or context-dependent (larger fonts possible).
+* **FR-UI-11:** Design UI layouts that utilize the vertical space (e.g., variable watch pane, persistent history view).
 
 **5.4. Keyboard Input**
-    *   **FR-KEY-01:** Accurately scan and decode the 8x8 matrix keyboard.
-    *   **FR-KEY-02:** Implement modifier keys (e.g., SHIFT, FN, ALPHA) to access the full range of functions, programming keywords, Python symbols (`:`, `_`, `"` etc.), and variable names.
-    *   **FR-KEY-03:** Provide essential editing keys: Backspace/CE, AC.
-    *   **FR-KEY-04:** Provide navigation keys (UP, DOWN, LEFT, RIGHT, ENTER/OK, ESC/BACK).
-    *   **FR-KEY-05:** Key mapping must be clearly defined and configurable (e.g., in `/sd/config.json`). A dedicated UI for viewing the keymap might be useful.
+
+* **FR-KEY-01:** Accurately scan and decode the 8x8 matrix keyboard.
+* **FR-KEY-02:** Implement modifier keys (e.g., SHIFT, FN, ALPHA) to access the full range of functions, programming keywords, Python symbols (`:`, `_`, `"` etc.), and variable names.
+* **FR-KEY-03:** Provide essential editing keys: Backspace/CE, AC.
+* **FR-KEY-04:** Provide navigation keys (UP, DOWN, LEFT, RIGHT, ENTER/OK, ESC/BACK).
+* **FR-KEY-05:** Key mapping must be clearly defined and configurable (e.g., in `/sd/config.json`). A dedicated UI for viewing the keymap might be useful.
 
 **5.5. SD Card Storage (Mandatory)**
-    *   **FR-SD-01:** Detect SD card presence on boot. Display persistent error and enter limited mode if absent/failed.
-    *   **FR-SD-02:** Store user scripts as `.py` files in `/sd/scripts/`.
-    *   **FR-SD-03:** Store calculation history persistently (e.g., `/sd/history.jsonl`). Implement rotation/size limiting.
-    *   **FR-SD-04:** Store system logs persistently (e.g., `/sd/calculator.log`). Implement rotation/size limiting.
-    *   **FR-SD-05:** Allow scripts to save/load data via API calls (`calculator_api.save_data`, `load_data`) to/from `/sd/data/` (defaulting to JSON format).
-    *   **FR-SD-06:** Store configuration (WiFi, API keys/endpoints, I2C settings, keymaps) in `/sd/config.json`.
+
+* **FR-SD-01:** Detect SD card presence on boot. Display persistent error and enter limited mode if absent/failed.
+* **FR-SD-02:** Store user scripts as `.py` files in `/sd/scripts/`.
+* **FR-SD-03:** Store calculation history persistently (e.g., `/sd/history.jsonl`). Implement rotation/size limiting.
+* **FR-SD-04:** Store system logs persistently (e.g., `/sd/calculator.log`). Implement rotation/size limiting.
+* **FR-SD-05:** Allow scripts to save/load data via API calls (`calculator_api.save_data`, `load_data`) to/from `/sd/data/` (defaulting to JSON format).
+* **FR-SD-06:** Store configuration (WiFi, API keys/endpoints, I2C settings, keymaps) in `/sd/config.json`.
 
 **5.6. Networking & API Integration**
-    *   **FR-NET-01:** Configure WiFi via `/sd/config.json`.
-    *   **FR-NET-02:** Connect to WiFi automatically or on demand.
-    *   **FR-NET-03:** Display WiFi connection status (e.g., icon, IP address).
-    *   **FR-NET-04:** Implement generic HTTP/S request functions accessible via `calculator_api`.
-    *   **FR-NET-05:** Implement Wikipedia and LLM API interaction logic within `calculator_api`. Securely load API keys from config.
-    *   **FR-NET-06:** Provide user feedback during network operations and handle errors gracefully.
+
+* **FR-NET-01:** Configure WiFi via `/sd/config.json`.
+* **FR-NET-02:** Connect to WiFi automatically or on demand.
+* **FR-NET-03:** Display WiFi connection status (e.g., icon, IP address).
+* **FR-NET-04:** Implement generic HTTP/S request functions accessible via `calculator_api`.
+* **FR-NET-05:** Implement Wikipedia and LLM API interaction logic within `calculator_api`. Securely load API keys from config.
+* **FR-NET-06:** Provide user feedback during network operations and handle errors gracefully.
 
 **5.7. External I2C Device Support**
-    *   **FR-I2C-01:** Configure the external I2C bus parameters (pins, frequency) via `/sd/config.json`.
-    *   **FR-I2C-02:** Provide an API function (`calculator_api.i2c_scan()`) for user scripts to detect connected device addresses.
-    *   **FR-I2C-03:** Provide API functions (`calculator_api.i2c_read(...)`, `calculator_api.i2c_write(...)`) for user scripts to communicate with devices at specified addresses, reading/writing byte data or registers.
-    *   **FR-I2C-04:** Implement basic error handling for I2C communication (e.g., device not responding NACK).
-    *   **FR-I2C-05:** Optionally allow defining an "I2C Device Map" (see Section 9) in `/sd/config.json` or `/sd/i2c_map.json` to allow scripts to reference devices/registers by name instead of raw addresses. The API should support using these names.
+
+* **FR-I2C-01:** Configure the external I2C bus parameters (pins, frequency) via `/sd/config.json`.
+* **FR-I2C-02:** Provide an API function (`calculator_api.i2c_scan()`) for user scripts to detect connected device addresses.
+* **FR-I2C-03:** Provide API functions (`calculator_api.i2c_read(...)`, `calculator_api.i2c_write(...)`) for user scripts to communicate with devices at specified addresses, reading/writing byte data or registers.
+* **FR-I2C-04:** Implement basic error handling for I2C communication (e.g., device not responding NACK).
+* **FR-I2C-05:** Optionally allow defining an "I2C Device Map" (see Section 9) in `/sd/config.json` or `/sd/i2c_map.json` to allow scripts to reference devices/registers by name instead of raw addresses. The API should support using these names.
 
 **6. Non-Functional Requirements**
 
@@ -125,25 +134,27 @@ The SPNC aims to be a powerful, open-source handheld calculator built using ESP3
 **7. System Architecture**
 
 **7.1. Hardware Summary**
-    *   ESP32 with PSRAM (Mandatory)
-    *   256x128 OLED Display (SPI or I2C)
-    *   8x8 Matrix Keyboard
-    *   Micro SD Card Module (SPI)
-    *   External I2C Header/Connector
+
+* ESP32 with PSRAM (Mandatory)
+* 256x128 OLED Display (SPI or I2C)
+* 8x8 Matrix Keyboard
+* Micro SD Card Module (SPI)
+* External I2C Header/Connector
 
 **7.2. Software Modules (Micropython)**
-    *   `main.py`: Initialization, main loop, mode dispatcher.
-    *   `config_manager.py`: Loads and manages configuration from `/sd/config.json` (Pins, WiFi, APIs, I2C settings, Keymap, I2C Map).
-    *   `keyboard_manager.py`: Matrix scanning, key decoding based on keymap from config, modifier state.
-    *   `display_manager.py`: OLED driver wrapper (for 256x128), UI layout engine, font management.
-    *   `math_engine.py`: Handles interactive expression evaluation, DEG/RAD/GRAD logic, shared `variables` dict.
-    *   `script_manager.py`: Script editor UI, loading/saving `.py` files from `/sd/scripts/`, initiating script execution.
-    *   `sandbox_exec.py`: **Crucial.** Implements the sandboxed `exec()` environment, restricts builtins/imports, injects `calculator_api`.
-    *   `calculator_api.py`: **Defines the functions exposed to user scripts.** Acts as a facade to other modules.
-    *   `network_manager.py`: WiFi connection, generic HTTP/S requests (via `urequests`).
-    *   `sd_manager.py`: Manages history log, system log, user data files (`/sd/data/`).
-    *   `i2c_manager.py`: Manages the external I2C bus based on config, provides core read/write/scan functions used by `calculator_api`.
-    *   `lib/`: Contains drivers (OLED, `sdcard.py`) and libraries (`urequests.py`, `ujson.py`, etc.).
+
+* `main.py`: Initialization, main loop, mode dispatcher.
+* `config_manager.py`: Loads and manages configuration from `/sd/config.json` (Pins, WiFi, APIs, I2C settings, Keymap, I2C Map).
+* `keyboard_manager.py`: Matrix scanning, key decoding based on keymap from config, modifier state.
+* `display_manager.py`: OLED driver wrapper (for 256x128), UI layout engine, font management.
+* `math_engine.py`: Handles interactive expression evaluation, DEG/RAD/GRAD logic, shared `variables` dict.
+* `script_manager.py`: Script editor UI, loading/saving `.py` files from `/sd/scripts/`, initiating script execution.
+* `sandbox_exec.py`: **Crucial.** Implements the sandboxed `exec()` environment, restricts builtins/imports, injects `calculator_api`.
+* `calculator_api.py`: **Defines the functions exposed to user scripts.** Acts as a facade to other modules.
+* `network_manager.py`: WiFi connection, generic HTTP/S requests (via `urequests`).
+* `sd_manager.py`: Manages history log, system log, user data files (`/sd/data/`).
+* `i2c_manager.py`: Manages the external I2C bus based on config, provides core read/write/scan functions used by `calculator_api`.
+* `lib/`: Contains drivers (OLED, `sdcard.py`) and libraries (`urequests.py`, `ujson.py`, etc.).
 
 **8. Programmable API (Environment for User `.py` Scripts)**
 
@@ -164,7 +175,9 @@ Executed via `sandbox_exec.py`. Provides:
 **9. I2C Device Map**
 
 * To simplify script interaction with known I2C devices, an optional mapping can be defined in `/sd/config.json` or `/sd/i2c_map.json`.
+
 * This allows scripts to use symbolic names instead of raw addresses and register numbers via the `calculator_api.i2c_read/write_reg` functions.
+
 * **Example `i2c_map.json` Structure:**
   
   ```json
@@ -187,6 +200,7 @@ Executed via `sandbox_exec.py`. Provides:
     }
   }
   ```
+
 * The `i2c_manager.py` and `calculator_api.py` will use this map to translate names to addresses/registers.
 
 **10. Data Formats (SD Card)**
